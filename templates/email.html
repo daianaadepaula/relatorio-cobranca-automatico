@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border-top: 5px solid #2e1bbbff;
+        }
+        h2 {
+            color: #2d3436;
+            font-size: 20px;
+            margin-top: 0;
+        }
+        p {
+            color: #636e72;
+            line-height: 1.5;
+        }
+        .card-valor {
+            background-color: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 12px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .card-valor p {
+            margin: 4px 0;
+            color: #721c24;
+        }
+        .footer {
+            margin-top: 24px;
+            font-size: 12px;
+            color: #b2bec3;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Aviso de Pendência Financeira</h2>
+        <p>Olá, <strong>{nome}</strong>!</p>
+        <p>Identificamos uma pendência em seu cadastro associada à sua conta.</p>
+        
+        <div class="card-valor">
+            <p><strong>Valor Pendente:</strong> R$ {valor_devido}</p>
+            <p><strong>Data de Vencimento:</strong> {data_vencimento}</p>
+        </div>
+
+        <p>Por favor, entre em contato para regularizar sua situação o mais breve possível.</p>
+        <div class="footer">
+            <p>Esta é uma mensagem automática enviada pelo sistema de cobrança.</p>
+        </div>
+    </div>
+</body>
+</html>
