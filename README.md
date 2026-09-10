@@ -1,12 +1,12 @@
 # 📬 Relatório e Notificador Automático de Cobrança
 
-Sistema automatizado em Python para identificação de pendências financeiras, consolidação de métricas de inadimplência e disparo de notificações personalizadas por e-mail com templates em HTML.
+Sistema automatizado em Python para identificação de pendências financeiras, consolidação de métricas de inadimplência, disparo de notificações personalizadas por e-mail com templates em HTML e geração de relatório executivo em PDF com envio automático para o gestor.
 
 ---
 
 ## 🎯 Objetivo do Projeto
 
-O objetivo principal deste projeto é automatizar a rotina do setor financeiro/administrativo na identificação e contato com clientes inadimplentes. Em vez de checar planilhas manualmente e redigir e-mails um a um, o sistema processa a base de dados, calcula o montante em aberto e envia lembretes formais e amigáveis diretamente para cada cliente.
+O objetivo principal deste projeto é automatizar a rotina do setor financeiro/administrativo na identificação e contato com clientes inadimplentes. Em vez de checar planilhas manualmente e redigir e-mails um a um, o sistema processa a base de dados, calcula o montante em aberto, envia lembretes formais e amigáveis diretamente para cada cliente e gera um relatório consolidado em PDF para auditoria e acompanhamento.
 
 ---
 
@@ -14,8 +14,10 @@ O objetivo principal deste projeto é automatizar a rotina do setor financeiro/a
 
 * **Elimina o trabalho manual:** Substitui o envio repetitivo e manual de avisos de cobrança por um fluxo 100% automatizado.
 * **Reduz falhas humanas:** Garante que valores, nomes e datas de vencimento cheguem corretos a cada destinatário sem erros de digitação.
-* **Visibilidade imediata do caixa:** Calcula instantaneamente quantos clientes estão em atraso e o valor total acumulado da pendência.
-* **Comunicação profissional:** Utiliza um template HTML visualmente limpo, responsivo e seguro, transmitindo credibilidade na cobrança.
+* **Resiliência no disparo:** Tratamento individual de exceções por cliente, garantindo que o erro no e-mail de um destinatário não interrompa o envio para os demais.
+* **Auditoria e Acompanhamento em PDF:** Gera automaticamente um relatório executivo em PDF com KPIs de disparos (sucessos e falhas) e log detalhado por horário.
+* **Notificação do Gestor:** Envia o relatório em PDF recém-gerado como anexo para o e-mail do remetente/responsável ao fim da execução.
+* **Comunicação profissional:** Utiliza templates HTML visualmente limpos, responsivos e seguros, transmitindo credibilidade na cobrança.
 * **Segurança de credenciais:** Armazena senhas e configurações de e-mail em variáveis de ambiente protegidas (`.env`), impedindo o vazamento acidental em repositórios de código.
 
 ---
@@ -27,6 +29,8 @@ O objetivo principal deste projeto é automatizar a rotina do setor financeiro/a
 - [x] **Métricas Rápidas:** Apresenta no console o número total de inadimplentes e a quantia total devida.
 - [x] **Templates de E-mail em HTML:** Permite a customização de layout com marcações dinâmicas (`{nome}`, `{valor_devido}`, `{data_vencimento}`).
 - [x] **Envio Seguro via SMTP/TLS:** Conecta-se a servidores SMTP (como Gmail, Outlook ou corporativos) utilizando criptografia TLS.
+- [x] **Relatório Executivo em PDF:** Gera um relatório com data e hora dinâmica, cartões de KPIs (total, enviados com sucesso e falhas) e tabela zebrada de auditoria usando `xhtml2pdf`.
+- [x] **Disparo do Relatório por E-mail:** Anexa e despacha o arquivo PDF gerado diretamente para a caixa de entrada do remetente.
 
 ---
 
@@ -42,11 +46,12 @@ relatorio-cobranca-automatico/
 │   └── app.py                # Script principal de execução da automação
 │
 ├── templates/
-│   └── email.html            # Template do corpo do e-mail em HTML/CSS
+│   ├── email.html            # Template do corpo do e-mail de cobrança (HTML/CSS)
+│   └── relatorio_pdf.html    # Template do relatório executivo em PDF (HTML/CSS com KPIs)
 │
 ├── .env.example              # Exemplo de configuração das variáveis de ambiente
-├── .gitignore                # Arquivos e pastas ignorados pelo Git (.venv, .env, etc.)
-├── requirements.txt          # Dependências do projeto (pandas, python-dotenv)
+├── .gitignore                # Arquivos e pastas ignorados pelo Git (.venv, .env, *.pdf, etc.)
+├── requirements.txt          # Dependências do projeto (pandas, python-dotenv, xhtml2pdf, etc.)
 └── README.md                 # Documentação do projeto
 ```
 
@@ -127,8 +132,11 @@ Insira os clientes e suas pendências no arquivo `dados/clientes.csv`:
 ```csv
 nome,email,valor_devido,data_vencimento,status
 Ana Silva,ana@email.com,250.00,10-08-2026,Pendente
+Beatriz Souza,beatriz@email.com,450.00,15-08-2026,Pago
 Carlos Lima,carlos@email.com,120.50,01-09-2026,Pago
-Beatriz Souza,beatriz@email.com,450.00,15-08-2026,Pendente
+Daniel Rodrigues,daniel@email.com,500.50,10-09-2026,Pendente
+Eduarda Dias,eduarda@email.com,750.50,10-09-2026,Pendente
+Felipe Santos,felipe@email.com,300.00,10-09-2026,Pago
 ```
 
 ### 2. Executar a Automação
@@ -139,9 +147,14 @@ python src/app.py
 
 ### 3. Exemplo de Saída no Terminal
 ```text
-Encontrados 2 clientes em atraso. Total pendente: R$ 950.50
+Encontrados 3 clientes em atraso. Total pendente: R$ 1501.00
 [E-MAIL ENVIADO COM SUCESSO] Para: ana@email.com | Valor: R$ 250.00
-[E-MAIL ENVIADO COM SUCESSO] Para: beatriz@email.com | Valor: R$ 450.00
+[E-MAIL ENVIADO COM SUCESSO] Para: daniel@email.com | Valor: R$ 500.50
+[E-MAIL ENVIADO COM SUCESSO] Para: eduarda@email.com | Valor: R$ 750.50
+
+[PDF Gerado]: relatorio_execucao_10_09_2026_14-15-30.pdf
+
+[SUCESSO] Relatório de acompanhamento em PDF enviado para o remetente!
 ```
 
 ### 4. Como Desativar o Ambiente Virtual
@@ -154,8 +167,9 @@ deactivate
 
 ## 📦 Tecnologias Utilizadas
 
-* [Python](https://www.python.org/) - Linguagem de programação.
-* [Pandas](https://pandas.pydata.org/) - Manipulação e análise da base de dados.
+* [Python](https://www.python.org/) - Linguagem de programação principal.
+* [Pandas](https://pandas.pydata.org/) - Manipulação e análise dos dados tabulares.
+* [xhtml2pdf](https://github.com/xhtml2pdf/xhtml2pdf) / [ReportLab](https://www.reportlab.com/) - Conversão de templates HTML/CSS em relatórios PDF executivos.
 * [python-dotenv](https://pypi.org/project/python-dotenv/) - Gerenciamento de variáveis de ambiente.
-* [smtplib & email.message](https://docs.python.org/3/library/email.message.html) - Conexão SMTP e composição de mensagens.
-* **HTML5 & CSS3** - Estruturação e estilização do template de e-mail.
+* [smtplib & email.message](https://docs.python.org/3/library/email.message.html) - Conexão SMTP segura (TLS), composição de mensagens e anexação de relatórios.
+* **HTML5 & CSS3** - Estruturação visual dos templates de e-mail e relatórios impressos.

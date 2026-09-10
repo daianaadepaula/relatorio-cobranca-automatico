@@ -9,3 +9,6 @@ __pycache__/
 
 # Variáveis de Ambiente
 .env
+
+# Relatórios gerados em PDF
+*.pdf

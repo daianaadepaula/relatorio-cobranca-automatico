@@ -1,5 +1,7 @@
 nome,email,valor_devido,data_vencimento,status
 Ana Silva,ana@email.com,250.00,10-08-2026,Pendente
+Beatriz Souza,beatriz@email.com,450.00,15-08-2026,Pago
 Carlos Lima,carlos@email.com,120.50,01-09-2026,Pago
-Beatriz Souza,beatriz@email.com,450.00,15-08-2026,Pendente
-Carlos Lima,carlos@email.com,120.50,01-09-2026,Pago
+Daniel Rodrigues,daniel@email.com,500.50,10-09-2026,Pendente
+Eduarda Dias,eduarda@email.com,750.50,10-09-2026,Pendente
+Felipe Santos,felipe@email.com,300.00,10-09-2026,Pago
