@@ -6,9 +6,23 @@ from src.config import Config
 from src.email_service import email_valido, enviar_email_cliente, enviar_relatorio_gestao
 from src.pdf_service import carregar_template, gerar_pdf
 
+def carregar_dados_clientes():
+    """Busca e carrega automaticamente clientes.xlsx ou clientes.csv."""
+    caminho_excel = os.path.join("dados", "clientes.xlsx")
+    caminho_csv = os.path.join("dados", "clientes.csv")
+
+    if os.path.exists(caminho_excel):
+        print("[INFO] Lendo dados da planilha Excel...")
+        return pd.read_excel(caminho_excel)
+    elif os.path.exists(caminho_csv):
+        print("[INFO] Lendo dados do arquivo CSV...")
+        return pd.read_csv(caminho_csv)
+    else:
+        raise FileNotFoundError("Nenhum arquivo 'clientes.xlsx' ou 'clientes.csv' foi encontrado na pasta 'dados/'.")
+
 def processar_e_notificar():
-    # 1. Lê a base de dados
-    df = pd.read_csv("dados/clientes.csv")    
+    # 1. Leitura e filtragem dos dados (aceita CSV ou Excel)
+    df = carregar_dados_clientes()  
     # 2. Filtra apenas os clientes inadimplentes
     pendentes = df[df["status"].str.lower() == "pendente"]
     

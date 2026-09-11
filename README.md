@@ -1,32 +1,35 @@
 # 📬 Relatório e Notificador Automático de Cobrança
 
-Sistema automatizado em Python estruturado em arquitetura modular para identificação de pendências financeiras, consolidação de métricas de inadimplência, disparo de notificações personalizadas por e-mail com templates em HTML e geração de relatório executivo em PDF com envio automático para o gestor.
+Sistema automatizado em Python estruturado em arquitetura modular para identificação de pendências financeiras em planilhas Excel ou arquivos CSV, consolidação de métricas de inadimplência, disparo de notificações personalizadas por e-mail com templates em HTML e geração de relatório executivo em PDF com envio automático para o gestor.
 
 ---
 
 ## 🎯 Objetivo do Projeto
 
-O objetivo principal deste projeto é automatizar a rotina do setor financeiro/administrativo na identificação e contato com clientes inadimplentes. Em vez de checar planilhas manualmente e redigir e-mails um a um, o sistema processa a base de dados, calcula o montante em aberto, valida os dados, envia lembretes formais e amigáveis diretamente para cada cliente e gera um relatório consolidado em PDF para auditoria e acompanhamento da gestão.
+O objetivo principal deste projeto é automatizar a rotina do setor financeiro/administrativo na identificação e contato com clientes inadimplentes. Em vez de checar planilhas manualmente e redigir e-mails um a um, o sistema processa a base de dados (em **Excel** ou **CSV**), calcula o montante em aberto, valida os dados, envia lembretes formais e amigáveis diretamente para cada cliente e gera um relatório consolidado em PDF para auditoria e acompanhamento da gestão.
 
 ---
 
 ## 💡 O que este projeto resolve?
 
 * **Elimina o trabalho manual:** Substitui o envio repetitivo e manual de avisos de cobrança por um fluxo 100% automatizado.
-* **Validação de Dados e Resiliência:** Valida o formato dos e-mails antes do envio (evitando erros de conexão) e possui tratamento individual de exceções para que uma falha pontual não interrompa os demais disparos.
+* **Flexibilidade de Entrada (Excel & CSV):** Reconhece automaticamente planilhas `.xlsx` ou arquivos `.csv`, permitindo que o time trabalhe com o formato de preferência.
+* **Validação de Dados e Resiliência:** Valida o formato dos e-mails com Regex antes do envio e possui tratamento individual de exceções para que falhas pontuais não interrompam os demais disparos.
+* **Confiabilidade com Testes Automatizados:** Suíte de testes unitários com `pytest` para garantir a estabilidade das funções críticas.
 * **Reduz falhas humanas:** Garante que valores, nomes e datas de vencimento cheguem corretos a cada destinatário sem erros de digitação.
 * **Auditoria e Acompanhamento em PDF:** Gera automaticamente um relatório executivo em PDF com KPIs de disparos (sucessos, falhas e e-mails inválidos) e log detalhado por horário, salvo na pasta `relatorios/`.
 * **Notificação da Gestão:** Envia o relatório em PDF recém-gerado como anexo para o e-mail do remetente/responsável ao fim da execução.
-* **Arquitetura Limpa e Modular:** Código separado em camadas de serviço (`config`, `email_service`, `pdf_service` e `app`), facilitando manutenção e testes.
+* **Arquitetura Limpa e Modular:** Código separado em camadas de serviço (`config`, `email_service`, `pdf_service` e `app`).
 * **Segurança de credenciais:** Armazena senhas e configurações de e-mail em variáveis de ambiente protegidas (`.env`), impedindo o vazamento acidental em repositórios de código.
 
 ---
 
 ## 🚀 Funcionalidades
 
-- [x] **Leitura Dinâmica de Dados:** Processa bases de clientes em formato CSV através da biblioteca `pandas`.
+- [x] **Leitura Híbrida de Dados:** Busca e processa automaticamente `dados/clientes.xlsx` ou `dados/clientes.csv` via `pandas` e `openpyxl`.
 - [x] **Filtragem Inteligente:** Isola registros com status `Pendente` de forma insensível a maiúsculas/minúsculas.
 - [x] **Validação Prévia com Regex:** Verifica se o endereço de e-mail do cliente possui sintaxe válida antes de tentar a conexão SMTP.
+- [x] **Testes Automatizados:** Cobertura de testes unitários com `pytest` para validação de regras de validação de e-mails.
 - [x] **Métricas Rápidas:** Apresenta no console o número total de inadimplentes e a quantia total devida.
 - [x] **Templates de E-mail em HTML:** Permite a customização de layout com marcações dinâmicas (`{nome}`, `{valor_devido}`, `{data_vencimento}`).
 - [x] **Envio Seguro via SMTP/TLS:** Conecta-se a servidores SMTP (como Gmail, Outlook ou corporativos) utilizando criptografia TLS.
@@ -42,7 +45,8 @@ O objetivo principal deste projeto é automatizar a rotina do setor financeiro/a
 relatorio-cobranca-automatico/
 │
 ├── dados/
-│   └── clientes.csv          # Base de dados (nome, email, valor_devido, vencimento, status)
+│   ├── clientes.csv          # Base de dados em CSV
+│   └── clientes.xlsx         # Base de dados em Excel (prioritária caso exista)
 │
 ├── relatorios/               # Diretório onde os relatórios gerados em PDF são salvos (ignorado no Git)
 │
@@ -57,9 +61,12 @@ relatorio-cobranca-automatico/
 │   ├── email.html            # Template do corpo do e-mail de cobrança (HTML/CSS)
 │   └── relatorio_pdf.html    # Template do relatório executivo em PDF (HTML/CSS com KPIs)
 │
+├── tests/
+│   └── test_email_service.py # Testes automatizados com pytest
+│
 ├── .env.example              # Exemplo de configuração das variáveis de ambiente
 ├── .gitignore                # Arquivos e pastas ignorados pelo Git (.venv, .env, relatorios/, etc.)
-├── requirements.txt          # Dependências do projeto (pandas, python-dotenv, xhtml2pdf, etc.)
+├── requirements.txt          # Dependências do projeto (pandas, openpyxl, pytest, xhtml2pdf, etc.)
 └── README.md                 # Documentação do projeto
 ```
 
@@ -136,7 +143,7 @@ SMTP_PORT=587
 ## 🖥️ Como Usar
 
 ### 1. Atualizar a base de dados
-Insira os clientes e suas pendências no arquivo `dados/clientes.csv`:
+Insira os clientes e suas pendências no arquivo `dados/clientes.xlsx` ou `dados/clientes.csv`:
 ```csv
 nome,email,valor_devido,data_vencimento,status
 Ana Silva,ana@email.com,250.00,10-08-2026,Pendente
@@ -147,14 +154,21 @@ Eduarda Dias,eduarda@email.com,750.50,10-09-2026,Pendente
 Felipe Santos,felipe@email.com,300.00,10-09-2026,Pago
 ```
 
-### 2. Executar a Automação
+### 2. Executar os Testes Automatizados
+Para garantir que as regras e funções de validação estão funcionando corretamente:
+```powershell
+python -m pytest
+```
+
+### 3. Executar a Automação
 Com o ambiente virtual ativado, execute o módulo a partir da raiz do projeto:
 ```powershell
 python -m src.app
 ```
 
-### 3. Exemplo de Saída no Terminal
+### 4. Exemplo de Saída no Terminal
 ```text
+[INFO] Lendo dados da planilha Excel...
 Encontrados 3 clientes em atraso. Total pendente: R$ 1801.00
 [E-MAIL ENVIADO COM SUCESSO] Para: ana@email.com | Valor: R$ 250.00
 [E-MAIL ENVIADO COM SUCESSO] Para: daniel@email.com | Valor: R$ 500.50
@@ -167,7 +181,7 @@ Encontrados 3 clientes em atraso. Total pendente: R$ 1801.00
 [SUCESSO] Relatório enviado para o gestor!
 ```
 
-### 4. Como Desativar o Ambiente Virtual
+### 5. Como Desativar o Ambiente Virtual
 Após a utilização, basta digitar no terminal:
 ```powershell
 deactivate
@@ -179,6 +193,8 @@ deactivate
 
 * [Python](https://www.python.org/) - Linguagem de programação principal.
 * [Pandas](https://pandas.pydata.org/) - Manipulação e análise dos dados tabulares.
+* [openpyxl](https://openpyxl.readthedocs.io/) - Leitura e manipulação de planilhas Excel (.xlsx).
+* [pytest](https://docs.pytest.org/) - Framework para testes automatizados.
 * [xhtml2pdf](https://github.com/xhtml2pdf/xhtml2pdf) / [ReportLab](https://www.reportlab.com/) - Conversão de templates HTML/CSS em relatórios PDF executivos.
 * [python-dotenv](https://pypi.org/project/python-dotenv/) - Gerenciamento de variáveis de ambiente.
 * [smtplib & email.message](https://docs.python.org/3/library/email.message.html) - Conexão SMTP segura (TLS), composição de mensagens e anexação de relatórios.
