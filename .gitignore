@@ -12,3 +12,4 @@ __pycache__/
 
 # Relatórios gerados em PDF
 *.pdf
+relatorios/

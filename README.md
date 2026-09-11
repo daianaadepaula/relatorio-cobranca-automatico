@@ -1,23 +1,23 @@
 # 📬 Relatório e Notificador Automático de Cobrança
 
-Sistema automatizado em Python para identificação de pendências financeiras, consolidação de métricas de inadimplência, disparo de notificações personalizadas por e-mail com templates em HTML e geração de relatório executivo em PDF com envio automático para o gestor.
+Sistema automatizado em Python estruturado em arquitetura modular para identificação de pendências financeiras, consolidação de métricas de inadimplência, disparo de notificações personalizadas por e-mail com templates em HTML e geração de relatório executivo em PDF com envio automático para o gestor.
 
 ---
 
 ## 🎯 Objetivo do Projeto
 
-O objetivo principal deste projeto é automatizar a rotina do setor financeiro/administrativo na identificação e contato com clientes inadimplentes. Em vez de checar planilhas manualmente e redigir e-mails um a um, o sistema processa a base de dados, calcula o montante em aberto, envia lembretes formais e amigáveis diretamente para cada cliente e gera um relatório consolidado em PDF para auditoria e acompanhamento.
+O objetivo principal deste projeto é automatizar a rotina do setor financeiro/administrativo na identificação e contato com clientes inadimplentes. Em vez de checar planilhas manualmente e redigir e-mails um a um, o sistema processa a base de dados, calcula o montante em aberto, valida os dados, envia lembretes formais e amigáveis diretamente para cada cliente e gera um relatório consolidado em PDF para auditoria e acompanhamento da gestão.
 
 ---
 
 ## 💡 O que este projeto resolve?
 
 * **Elimina o trabalho manual:** Substitui o envio repetitivo e manual de avisos de cobrança por um fluxo 100% automatizado.
+* **Validação de Dados e Resiliência:** Valida o formato dos e-mails antes do envio (evitando erros de conexão) e possui tratamento individual de exceções para que uma falha pontual não interrompa os demais disparos.
 * **Reduz falhas humanas:** Garante que valores, nomes e datas de vencimento cheguem corretos a cada destinatário sem erros de digitação.
-* **Resiliência no disparo:** Tratamento individual de exceções por cliente, garantindo que o erro no e-mail de um destinatário não interrompa o envio para os demais.
-* **Auditoria e Acompanhamento em PDF:** Gera automaticamente um relatório executivo em PDF com KPIs de disparos (sucessos e falhas) e log detalhado por horário.
-* **Notificação do Gestor:** Envia o relatório em PDF recém-gerado como anexo para o e-mail do remetente/responsável ao fim da execução.
-* **Comunicação profissional:** Utiliza templates HTML visualmente limpos, responsivos e seguros, transmitindo credibilidade na cobrança.
+* **Auditoria e Acompanhamento em PDF:** Gera automaticamente um relatório executivo em PDF com KPIs de disparos (sucessos, falhas e e-mails inválidos) e log detalhado por horário, salvo na pasta `relatorios/`.
+* **Notificação da Gestão:** Envia o relatório em PDF recém-gerado como anexo para o e-mail do remetente/responsável ao fim da execução.
+* **Arquitetura Limpa e Modular:** Código separado em camadas de serviço (`config`, `email_service`, `pdf_service` e `app`), facilitando manutenção e testes.
 * **Segurança de credenciais:** Armazena senhas e configurações de e-mail em variáveis de ambiente protegidas (`.env`), impedindo o vazamento acidental em repositórios de código.
 
 ---
@@ -26,11 +26,13 @@ O objetivo principal deste projeto é automatizar a rotina do setor financeiro/a
 
 - [x] **Leitura Dinâmica de Dados:** Processa bases de clientes em formato CSV através da biblioteca `pandas`.
 - [x] **Filtragem Inteligente:** Isola registros com status `Pendente` de forma insensível a maiúsculas/minúsculas.
+- [x] **Validação Prévia com Regex:** Verifica se o endereço de e-mail do cliente possui sintaxe válida antes de tentar a conexão SMTP.
 - [x] **Métricas Rápidas:** Apresenta no console o número total de inadimplentes e a quantia total devida.
 - [x] **Templates de E-mail em HTML:** Permite a customização de layout com marcações dinâmicas (`{nome}`, `{valor_devido}`, `{data_vencimento}`).
 - [x] **Envio Seguro via SMTP/TLS:** Conecta-se a servidores SMTP (como Gmail, Outlook ou corporativos) utilizando criptografia TLS.
 - [x] **Relatório Executivo em PDF:** Gera um relatório com data e hora dinâmica, cartões de KPIs (total, enviados com sucesso e falhas) e tabela zebrada de auditoria usando `xhtml2pdf`.
-- [x] **Disparo do Relatório por E-mail:** Anexa e despacha o arquivo PDF gerado diretamente para a caixa de entrada do remetente.
+- [x] **Organização de Arquivos Gerados:** Cria automaticamente o diretório `relatorios/` para armazenar o histórico dos PDFs gerados.
+- [x] **Disparo do Relatório por E-mail:** Anexa e despacha o arquivo PDF gerado diretamente para a caixa de entrada do gestor/remetente.
 
 ---
 
@@ -42,15 +44,21 @@ relatorio-cobranca-automatico/
 ├── dados/
 │   └── clientes.csv          # Base de dados (nome, email, valor_devido, vencimento, status)
 │
+├── relatorios/               # Diretório onde os relatórios gerados em PDF são salvos (ignorado no Git)
+│
 ├── src/
-│   └── app.py                # Script principal de execução da automação
+│   ├── __init__.py           # Identificador do pacote Python
+│   ├── app.py                # Orquestrador principal do fluxo de automação
+│   ├── config.py             # Configurações centralizadas e leitura do .env
+│   ├── email_service.py      # Serviços de validação e disparo de e-mails (cliente e gestor)
+│   └── pdf_service.py        # Serviços de renderização de template e compilação do PDF
 │
 ├── templates/
 │   ├── email.html            # Template do corpo do e-mail de cobrança (HTML/CSS)
 │   └── relatorio_pdf.html    # Template do relatório executivo em PDF (HTML/CSS com KPIs)
 │
 ├── .env.example              # Exemplo de configuração das variáveis de ambiente
-├── .gitignore                # Arquivos e pastas ignorados pelo Git (.venv, .env, *.pdf, etc.)
+├── .gitignore                # Arquivos e pastas ignorados pelo Git (.venv, .env, relatorios/, etc.)
 ├── requirements.txt          # Dependências do projeto (pandas, python-dotenv, xhtml2pdf, etc.)
 └── README.md                 # Documentação do projeto
 ```
@@ -140,21 +148,23 @@ Felipe Santos,felipe@email.com,300.00,10-09-2026,Pago
 ```
 
 ### 2. Executar a Automação
-Com o ambiente virtual ativado, execute o script:
+Com o ambiente virtual ativado, execute o módulo a partir da raiz do projeto:
 ```powershell
-python src/app.py
+python -m src.app
 ```
 
 ### 3. Exemplo de Saída no Terminal
 ```text
-Encontrados 3 clientes em atraso. Total pendente: R$ 1501.00
+Encontrados 3 clientes em atraso. Total pendente: R$ 1801.00
 [E-MAIL ENVIADO COM SUCESSO] Para: ana@email.com | Valor: R$ 250.00
 [E-MAIL ENVIADO COM SUCESSO] Para: daniel@email.com | Valor: R$ 500.50
 [E-MAIL ENVIADO COM SUCESSO] Para: eduarda@email.com | Valor: R$ 750.50
 
-[PDF Gerado]: relatorio_execucao_10_09_2026_14-15-30.pdf
+[PDF Gerado]: relatorios\relatorio_execucao_10_09_2026_20-58-30.pdf
 
 [SUCESSO] Relatório de acompanhamento em PDF enviado para o remetente!
+
+[SUCESSO] Relatório enviado para o gestor!
 ```
 
 ### 4. Como Desativar o Ambiente Virtual
