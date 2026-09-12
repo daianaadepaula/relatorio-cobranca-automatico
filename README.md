@@ -199,3 +199,25 @@ deactivate
 * [python-dotenv](https://pypi.org/project/python-dotenv/) - Gerenciamento de variáveis de ambiente.
 * [smtplib & email.message](https://docs.python.org/3/library/email.message.html) - Conexão SMTP segura (TLS), composição de mensagens e anexação de relatórios.
 * **HTML5 & CSS3** - Estruturação visual dos templates de e-mail e relatórios impressos.
+
+---
+
+## 🛠️ Desafios Encontrados e Soluções Implementadas
+
+Durante o desenvolvimento da automação, surgiram desafios técnicos práticos de renderização, concorrência SMTP e resolução de pacotes. Abaixo estão documentadas as principais dificuldades e como foram superadas:
+
+### 1. Incompatibilidades do Renderizador HTML/CSS (`xhtml2pdf`)
+* **Desafio:** Ao estilizar o relatório em PDF com CSS moderno, o console apresentava avisos e falhas silenciosas devido à falta de suporte a propriedades como `border-radius`, `border-collapse` e seletores avançados como `@bottom-right` com `counter(page)`. Em alguns cenários, colunas de e-mail sobrepunham os valores monetários.
+* **Solução:** O template `relatorio_pdf.html` foi refatorado para utilizar estritamente regras de CSS 2.1 e layout baseados em tabelas HTML com larguras percentuais explícitas (`width="%"`) em cada coluna. Isso garantiu a renderização visual idêntica em qualquer sistema operacional sem sobreposição de textos.
+
+### 2. Tratamento de Exceções no Envio SMTP do Relatório
+* **Desafio:** O envio do e-mail de cobrança individual para os clientes e o disparo final do relatório em PDF compartilhavam a mesma conexão SMTP. Caso a conexão sofresse um timeout durante a geração do PDF local, a tentativa de reaproveitar o socket gerava exceções como `'NotImplementedType' object is not iterable` ao montar o cabeçalho.
+* **Solução:** A arquitetura do `email_service.py` foi estruturada para isolar o ciclo de vida da conexão do relatório final em um bloco de contexto dedicado (`with smtplib.SMTP(...) as server_relatorio`). Além disso, todas as propriedades dinamizadas do template foram explicitamente convertidas para `str()`.
+
+### 3. Falha de Importação do Pacote `src` na Suíte de Testes (`pytest`)
+* **Desafio:** Ao executar a suíte de testes com o comando `pytest`, o interpretador não reconhecia a pasta `src/` como um módulo acessível, resultando no erro `ModuleNotFoundError: No module named 'src'`.
+* **Solução:** Foi adicionado o arquivo de configuração `pytest.ini` definindo `pythonpath = .`, garantindo que o diretório raiz seja adicionado ao caminho de importação do Python. Alternativamente, padronizou-se a chamada da suíte pelo terminal via módulo nativo: `python -m pytest`.
+
+### 4. Validação Prévia de Dados e Redirecionamento Indevido
+* **Desafio:** Registros da planilha com e-mails malformatados ou ausentes geravam exceções no servidor SMTP e, em fluxos anteriores, tentavam enviar mensagens para o próprio remetente como *fallback*, inflando o log como "Sucesso".
+* **Solução:** Implementou-se a validação prévia com Regex via `email_valido()` antes do bloco `try/except` de envio. Registros inválidos são descartados do envio imediatamente, contabilizados como `E-mail Inválido` no resumo executivo e destacados em vermelho no relatório final.
